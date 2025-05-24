@@ -22,15 +22,18 @@ public class EventMapper {
             double theta = getTheta(xAxisLeft, yAxisLeft);
             double r = getR(xAxisLeft, yAxisLeft);
 
-            return new PolarCoords(r, theta);
+            return PolarCoords.builder()
+                    .radius(r)
+                    .theta(theta)
+                    .build();
         };
     }
 
     int THRESHOLD = 2_000;
 
     public static Function<PolarCoords, ELogicalEventType> translateAxisMove = coords -> {
-        double theta = coords.theta();
-        double r = coords.radius();
+        double theta = coords.getTheta();
+        double r = coords.getRadius();
 
 //        System.out.println("theta: " + theta + ", radius: " + r);
 
