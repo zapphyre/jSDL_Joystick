@@ -3,7 +3,10 @@ package org.asmus.component;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.asmus.model.*;
+import org.asmus.model.ButtonClick;
+import org.asmus.model.EButtonAxisMapping;
+import org.asmus.model.EMultiplicity;
+import org.asmus.model.GamepadEvent;
 import reactor.core.publisher.Sinks;
 
 import java.util.HashMap;
@@ -51,6 +54,7 @@ public class EventQualificator {
                 .longPress(computeIsLongPress(q))
                 .modifiers(convertModifiers(q))
                 .eventName(q.getRelease().getName())
+                .position(1)
                 .build();
     }
 

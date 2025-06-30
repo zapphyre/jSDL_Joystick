@@ -4,8 +4,8 @@ import org.asmus.behaviour.ActuationBehaviour;
 import org.asmus.builder.closure.button.OsDevice;
 import org.asmus.builder.closure.button.RawArrowSource;
 import org.asmus.digitizer.AxisDigitizer;
-import org.asmus.digitizer.RangeDigitizer;
-import org.asmus.digitizer.TriggerDigitizer;
+import org.asmus.digitizer.EdgeTriggerDigitizer;
+import org.asmus.digitizer.StepRangeDigitizer;
 import org.asmus.introspect.impl.BothIntrospector;
 import org.asmus.introspect.impl.PushIntrospector;
 import org.asmus.introspect.impl.ReleaseIntrospector;
@@ -19,15 +19,19 @@ import org.asmus.tool.AxisMapper;
 import org.asmus.tool.EventMapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
-import reactor.core.scheduler.Schedulers;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.asmus.model.NamingConstants.MAX;
+import static reactor.core.publisher.Flux.fromStream;
 
 public class IntrospectedEventFactory {
     private final Sinks.Many<GamepadEvent> qualifiedEventStream = Sinks.many().multicast().directBestEffort();
@@ -73,19 +77,17 @@ public class IntrospectedEventFactory {
 
     public RawArrowSource getArrowsStream() {
         return axisStates -> {
-            List<GamepadEvent> vertical = axisStates.entrySet().stream()
+            Stream<GamepadEvent> vertical = axisStates.entrySet().stream()
                     .filter(onlyDpValues)
                     .filter(notZeroFor(EButtonAxisMapping.UP.getMapping()))
-                    .map(AxisMapper.mapVertical)
-                    .toList();
+                    .map(AxisMapper.mapVertical);
 
-            List<GamepadEvent> horizontal = axisStates.entrySet().stream()
+            Stream<GamepadEvent> horizontal = axisStates.entrySet().stream()
                     .filter(onlyDpValues)
                     .filter(notZeroFor(EButtonAxisMapping.LEFT.getMapping()))
-                    .map(AxisMapper.mapHorizontal)
-                    .toList();
+                    .map(AxisMapper.mapHorizontal);
 
-            Flux.merge(Flux.fromIterable(vertical), Flux.fromIterable(horizontal))
+            Flux.merge(fromStream(vertical), fromStream(horizontal))
                     .map(q -> q.withModifiers(
                             MODIFIER.getIntrospector().getModifiersResetEvents().stream()
                                     .map(EButtonAxisMapping::getByMappingName)
@@ -95,7 +97,7 @@ public class IntrospectedEventFactory {
         };
     }
 
-    static Predicate<TriggerPosition> edgeValue = q -> Math.abs(q.getPosition()) == MAX;
+    static Predicate<GamepadEvent> edgeValue = q -> Math.abs(q.getPosition()) == MAX;
 
     public RawArrowSource rightTriggerStream() {
         return genericDigitizedTriggerProcessor(EButtonAxisMapping.TRIGGER_RIGHT);
@@ -141,44 +143,62 @@ public class IntrospectedEventFactory {
     }
 
     public RawArrowSource leftDigitizedRangeTriggerStream() {
-        return genericDigitizedTriggerRangeProcessor(EButtonAxisMapping.TRIGGER_LEFT);
+        return genericDigitizedTriggerStepProcessor(EButtonAxisMapping.TRIGGER_LEFT);
     }
 
-    RawArrowSource genericDigitizedTriggerRangeProcessor(EButtonAxisMapping axisMapping) {
-        RangeDigitizer digitizer = new RangeDigitizer(qualifiedEventStream);
-        Map<EButtonAxisMapping, Integer> mem = new HashMap<>();
-
+    // presunut toto do eventFactory a spravit z toho continuous alternativu
+    Function<Map<String, Integer>, Stream<GamepadEvent>> continuousTriggerProcessor(EButtonAxisMapping axis,
+                                                                                    Map<EButtonAxisMapping, Integer> mem) {
         return q -> q.entrySet().stream()
-                .filter(actionFor(axisMapping, mem))
-                .map(p -> TriggerPosition.builder()
+                .filter(actionFor(axis, mem))
+                .map(p -> GamepadEvent.builder()
+                        .qualified(EQualificationType.MULTIPLE) // maybe too early set / too high of a qualif.
                         .position(p.getValue())
-                        .type(axisMapping)
+                        .type(axis)
                         .build())
                 .map(p -> p.withModifiers(MODIFIER.getIntrospector().getModifiersResetEvents().stream()
                         .map(EButtonAxisMapping::getByMappingName)
-                        .collect(Collectors.toSet())))
+                        .collect(Collectors.toSet()))
+                );
+    }
+
+    RawArrowSource genericDigitizedTriggerStepProcessor(EButtonAxisMapping axisMapping) {
+        StepRangeDigitizer digitizer = new StepRangeDigitizer(qualifiedEventStream);
+        Map<EButtonAxisMapping, Integer> mem = new HashMap<>(); // has to be created here, in the instance closure
+
+        return q -> continuousTriggerProcessor(axisMapping, mem).apply(q)
                 .forEach(digitizer.digitize());
+    }
+
+    RawArrowSource genericContinuousTriggerProcessor(EButtonAxisMapping axisMapping) {
+        Map<EButtonAxisMapping, Integer> mem = new HashMap<>(); // has to be created here, in the instance closure
+        return q -> continuousTriggerProcessor(axisMapping, mem).apply(q)
+                .forEach(qualifiedEventStream::tryEmitNext);
     }
 
     RawArrowSource genericDigitizedTriggerProcessor(EButtonAxisMapping axisMapping) {
-        TriggerDigitizer digitizer = new TriggerDigitizer(qualifiedEventStream);
+        EdgeTriggerDigitizer digitizer = new EdgeTriggerDigitizer(qualifiedEventStream);
         Map<EButtonAxisMapping, Integer> mem = new HashMap<>();
 
-        return q -> q.entrySet().stream()
-                .filter(actionFor(axisMapping, mem))
-                .map(p -> TriggerPosition.builder()
-                        .position(p.getValue())
-                        .type(axisMapping)
-                        .build())
+        return q -> continuousTriggerProcessor(axisMapping, mem).apply(q)
                 .filter(edgeValue)
-                .map(p -> p.withModifiers(MODIFIER.getIntrospector().getModifiersResetEvents().stream()
-                        .map(EButtonAxisMapping::getByMappingName)
-                        .collect(Collectors.toSet())
-                ))
                 .forEach(digitizer.digitize());
+
+//        return q -> q.entrySet().stream()
+//                .filter(actionFor(axisMapping, mem))
+//                .map(p -> TriggerPosition.builder()
+//                        .position(p.getValue())
+//                        .type(axisMapping)
+//                        .build())
+//                .filter(edgeValue)
+//                .map(p -> p.withModifiers(MODIFIER.getIntrospector().getModifiersResetEvents().stream()
+//                        .map(EButtonAxisMapping::getByMappingName)
+//                        .collect(Collectors.toSet())
+//                ))
+//                .forEach(digitizer.digitize());
     }
 
-    Predicate<Map.Entry<String, Integer>> actionFor(EButtonAxisMapping name, Map<EButtonAxisMapping, Integer> mem) {
+    static Predicate<Map.Entry<String, Integer>> actionFor(EButtonAxisMapping name, Map<EButtonAxisMapping, Integer> mem) {
         return AxisMapper.valueFor(name.getMapping()).and(p -> {
             Integer prev = mem.put(name, p.getValue());
 

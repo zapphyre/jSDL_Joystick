@@ -5,7 +5,7 @@ import org.asmus.service.JoyWorker;
 import reactor.core.publisher.Flux;
 
 @FunctionalInterface
-public interface PolarCoordsProducer {
+public interface  PolarCoordsProducer {
 
     Flux<PolarCoords> polarProducer(JoyWorker worker);
 }

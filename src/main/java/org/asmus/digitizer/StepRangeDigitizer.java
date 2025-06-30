@@ -12,14 +12,14 @@ import static org.asmus.model.NamingConstants.MAX;
 import static org.asmus.model.NamingConstants.MIN;
 
 @RequiredArgsConstructor
-public class RangeDigitizer {
+public class StepRangeDigitizer {
 
     private final Sinks.Many<GamepadEvent> qualifiedEventStream;
     private final int numSegments = 4;
     private int lastSegmentIndex = -1; // Track previous segment
     long range = (long) MAX - MIN + 1; // Total values: 65535
 
-    public Consumer<TriggerPosition> digitize() {
+    public Consumer<GamepadEvent> digitize() {
         return q -> {
 
             int currentSegment = processInput(q.getPosition());
@@ -30,11 +30,7 @@ public class RangeDigitizer {
                 type = ELogicalEventType.STEP_POSITIVE;
 
             if (lastSegmentIndex != -1 && lastSegmentIndex != currentSegment)
-                qualifiedEventStream.tryEmitNext(GamepadEvent.builder()
-                        .logicalEventType(type)
-                        .type(q.getType())
-                        .modifiers(q.getModifiers())
-                        .build());
+                qualifiedEventStream.tryEmitNext(q.withLogicalEventType(type));
 
             lastSegmentIndex = currentSegment;
         };

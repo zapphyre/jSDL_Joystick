@@ -8,8 +8,6 @@ import org.asmus.model.PolarCoords;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.asmus.model.EPolarDirection.*;
-
 @UtilityClass
 public class EventMapper {
 
@@ -20,7 +18,9 @@ public class EventMapper {
             int xAxisLeft = q.get(x);
 
             double theta = getTheta(xAxisLeft, yAxisLeft);
-            double r = getR(xAxisLeft, yAxisLeft);
+            double r = getR(xAxisLeft, yAxisLeft)
+//                    / 46341.0; // Normalize radius
+            ;
 
             return PolarCoords.builder()
                     .radius(r)
@@ -69,7 +69,7 @@ public class EventMapper {
 
 //        @Override
         public EPolarDirection getHeading() {
-            return FIZZY;
+            return EPolarDirection.FIZZY;
         }
     }
     public static class Up extends Heading {}

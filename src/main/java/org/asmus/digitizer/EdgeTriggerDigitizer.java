@@ -13,7 +13,7 @@ import static org.asmus.model.NamingConstants.MAX;
 import static org.asmus.model.NamingConstants.MIN;
 
 @RequiredArgsConstructor
-public class TriggerDigitizer {
+public class EdgeTriggerDigitizer {
 
     private final long QUICK_MS = 210;
 
@@ -23,16 +23,17 @@ public class TriggerDigitizer {
 
     private TriggerState current = new Released();
 
-    public Consumer<TriggerPosition> digitize() {
+    public Consumer<GamepadEvent> digitize() {
         return q -> {
             current = current.getNext(q.getPosition(), current);
 
-            qualifiedEventStream.tryEmitNext(GamepadEvent.builder()
-                    .logicalEventType(last = current.getLogicalType())
-                    .type(q.getType())
-                    .modifiers(q.getModifiers())
-                    .qualified(EQualificationType.MULTIPLE)
-                    .build());
+            qualifiedEventStream.tryEmitNext(q.withLogicalEventType(last = current.getLogicalType()));
+//            qualifiedEventStream.tryEmitNext(GamepadEvent.builder()
+//                    .logicalEventType(last = current.getLogicalType())
+//                    .type(q.getType())
+//                    .modifiers(q.getModifiers())
+//                    .qualified(EQualificationType.MULTIPLE)
+//                    .build());
         };
     }
 

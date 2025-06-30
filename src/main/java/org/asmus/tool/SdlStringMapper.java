@@ -2,7 +2,6 @@ package org.asmus.tool;
 
 import lombok.experimental.UtilityClass;
 import org.asmus.model.ButtonNamePosition;
-import org.asmus.model.NamingConstants;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

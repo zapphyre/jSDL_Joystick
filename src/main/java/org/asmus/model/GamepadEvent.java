@@ -23,4 +23,6 @@ public class GamepadEvent {
 
     @Builder.Default
     EQualificationType qualified = EQualificationType.PUSH;
+
+    int position;
 }

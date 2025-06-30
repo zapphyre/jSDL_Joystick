@@ -11,19 +11,21 @@ import java.util.function.Predicate;
 @UtilityClass
 public class AxisMapper {
 
+    GamepadEvent.GamepadEventBuilder builder = GamepadEvent.builder().position(1);
+
     public static Function<Map.Entry<String, Integer>, GamepadEvent> mapVertical =
             q -> q.getValue() > 0 ?
-                    GamepadEvent.builder()
+                    builder
                             .type(EButtonAxisMapping.DOWN)
-                            .build() : GamepadEvent.builder()
+                            .build() : builder
                     .type(EButtonAxisMapping.UP)
                     .build();
 
     public static Function<Map.Entry<String, Integer>, GamepadEvent> mapHorizontal =
             q -> q.getValue() > 0 ?
-                    GamepadEvent.builder()
+                    builder
                             .type(EButtonAxisMapping.RIGHT)
-                            .build() : GamepadEvent.builder()
+                            .build() : builder
                     .type(EButtonAxisMapping.LEFT)
                     .build();
 
