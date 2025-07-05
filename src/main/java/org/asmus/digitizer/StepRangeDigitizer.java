@@ -30,9 +30,7 @@ public class StepRangeDigitizer {
                 type = ELogicalEventType.STEP_POSITIVE;
 
             if (lastSegmentIndex != -1 && lastSegmentIndex != currentSegment)
-                qualifiedEventStream.tryEmitNext(q.withLogicalEventType(type)
-                        .withLogicalEventType(ELogicalEventType.STEP_NEGATIVE)
-                );
+                qualifiedEventStream.tryEmitNext(q.withLogicalEventType(type));
 
             lastSegmentIndex = currentSegment;
         };
