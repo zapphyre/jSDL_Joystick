@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -99,12 +100,20 @@ public class IntrospectedEventFactory {
 
     static Predicate<GamepadEvent> edgeValue = q -> Math.abs(q.getPosition()) == MAX;
 
-    public RawArrowSource rightTriggerStream() {
+    public RawArrowSource rightTriggerDigitizedProcessor() {
         return genericDigitizedTriggerProcessor(EButtonAxisMapping.TRIGGER_RIGHT);
     }
 
-    public RawArrowSource leftTriggerStream() {
+    public RawArrowSource leftTriggerDigitizedProcessor() {
         return genericDigitizedTriggerProcessor(EButtonAxisMapping.TRIGGER_LEFT);
+    }
+
+    public RawArrowSource rightTriggerContinuousProcessor() {
+        return genericContinuousTriggerProcessor(EButtonAxisMapping.TRIGGER_RIGHT);
+    }
+
+    public RawArrowSource leftTriggerContinuousProcessor() {
+        return genericContinuousTriggerProcessor(EButtonAxisMapping.TRIGGER_LEFT);
     }
 
     public RawArrowSource leftStickStream() {
@@ -146,7 +155,10 @@ public class IntrospectedEventFactory {
         return genericDigitizedTriggerStepProcessor(EButtonAxisMapping.TRIGGER_LEFT);
     }
 
-    // presunut toto do eventFactory a spravit z toho continuous alternativu
+    public RawArrowSource rightDigitizedRangeTriggerStream() {
+        return genericDigitizedTriggerStepProcessor(EButtonAxisMapping.TRIGGER_RIGHT);
+    }
+
     Function<Map<String, Integer>, Stream<GamepadEvent>> continuousTriggerProcessor(EButtonAxisMapping axis,
                                                                                     Map<EButtonAxisMapping, Integer> mem) {
         return q -> q.entrySet().stream()
@@ -172,7 +184,14 @@ public class IntrospectedEventFactory {
 
     RawArrowSource genericContinuousTriggerProcessor(EButtonAxisMapping axisMapping) {
         Map<EButtonAxisMapping, Integer> mem = new HashMap<>(); // has to be created here, in the instance closure
+        AtomicInteger prev = new AtomicInteger(0);
+
         return q -> continuousTriggerProcessor(axisMapping, mem).apply(q)
+                .map(g -> g.withPosition(g.getPosition() + MAX))
+                .map(g -> g.withLogicalEventType(
+                        g.getPosition() > prev.getAndSet(g.getPosition()) ?
+                                ELogicalEventType.STEP_POSITIVE : ELogicalEventType.STEP_NEGATIVE
+                ))
                 .forEach(qualifiedEventStream::tryEmitNext);
     }
 
@@ -183,19 +202,6 @@ public class IntrospectedEventFactory {
         return q -> continuousTriggerProcessor(axisMapping, mem).apply(q)
                 .filter(edgeValue)
                 .forEach(digitizer.digitize());
-
-//        return q -> q.entrySet().stream()
-//                .filter(actionFor(axisMapping, mem))
-//                .map(p -> TriggerPosition.builder()
-//                        .position(p.getValue())
-//                        .type(axisMapping)
-//                        .build())
-//                .filter(edgeValue)
-//                .map(p -> p.withModifiers(MODIFIER.getIntrospector().getModifiersResetEvents().stream()
-//                        .map(EButtonAxisMapping::getByMappingName)
-//                        .collect(Collectors.toSet())
-//                ))
-//                .forEach(digitizer.digitize());
     }
 
     static Predicate<Map.Entry<String, Integer>> actionFor(EButtonAxisMapping name, Map<EButtonAxisMapping, Integer> mem) {

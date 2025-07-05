@@ -28,12 +28,6 @@ public class EdgeTriggerDigitizer {
             current = current.getNext(q.getPosition(), current);
 
             qualifiedEventStream.tryEmitNext(q.withLogicalEventType(last = current.getLogicalType()));
-//            qualifiedEventStream.tryEmitNext(GamepadEvent.builder()
-//                    .logicalEventType(last = current.getLogicalType())
-//                    .type(q.getType())
-//                    .modifiers(q.getModifiers())
-//                    .qualified(EQualificationType.MULTIPLE)
-//                    .build());
         };
     }
 
@@ -94,7 +88,7 @@ public class EdgeTriggerDigitizer {
 
         @Override
         ELogicalEventType getLogicalType() {
-            return ELogicalEventType.STEP_POSITIVE;
+            return ELogicalEventType.EDGING_POSITIVE;
         }
     }
 
@@ -109,7 +103,23 @@ public class EdgeTriggerDigitizer {
 
         @Override
         ELogicalEventType getLogicalType() {
-            return ELogicalEventType.STEP_NEGATIVE;
+            return ELogicalEventType.EDGING_NEGATIVE;
+        }
+    }
+
+    class Dull extends TriggerState {
+
+        @Override
+        TriggerState getNext(int pos, TriggerState prev) {
+            if (pos == MAX) return new Engaged();
+            if (pos == MIN) return new StepDown();
+
+            return this;
+        }
+
+        @Override
+        ELogicalEventType getLogicalType() {
+            return ELogicalEventType.DULL;
         }
     }
 }

@@ -15,7 +15,7 @@ import static org.asmus.model.NamingConstants.MIN;
 public class StepRangeDigitizer {
 
     private final Sinks.Many<GamepadEvent> qualifiedEventStream;
-    private final int numSegments = 4;
+    private final int numSegments = 7;
     private int lastSegmentIndex = -1; // Track previous segment
     long range = (long) MAX - MIN + 1; // Total values: 65535
 
@@ -30,7 +30,9 @@ public class StepRangeDigitizer {
                 type = ELogicalEventType.STEP_POSITIVE;
 
             if (lastSegmentIndex != -1 && lastSegmentIndex != currentSegment)
-                qualifiedEventStream.tryEmitNext(q.withLogicalEventType(type));
+                qualifiedEventStream.tryEmitNext(q.withLogicalEventType(type)
+                        .withLogicalEventType(ELogicalEventType.STEP_NEGATIVE)
+                );
 
             lastSegmentIndex = currentSegment;
         };

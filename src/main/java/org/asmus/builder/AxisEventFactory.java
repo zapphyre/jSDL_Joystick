@@ -25,14 +25,12 @@ public class AxisEventFactory {
     public PolarCoordsProducer leftStickStream() {
         return q -> q.getAxisStream()
                 .filter(shouldPass(NamingConstants.LEFT_STICK_X, NamingConstants.LEFT_STICK_Y))
-//                .doOnDiscard(Map.class, p -> System.out.println("discarded: " + p))
                 .map(EventMapper.translateAxis(NamingConstants.LEFT_STICK_X, NamingConstants.LEFT_STICK_Y));
     }
 
     public PolarCoordsProducer rightStickStream() {
         return q -> q.getAxisStream()
                 .filter(shouldPass(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y))
-//                .doOnDiscard(Map.class, p -> System.out.println("discarded: " + p))
                 .map(EventMapper.translateAxis(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y));
     }
 
