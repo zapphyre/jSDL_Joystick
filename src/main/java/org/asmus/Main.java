@@ -34,14 +34,14 @@ public class Main {
         RawArrowSource triggerRangeDigi = gamepadEventSourceBuilder.leftDigitizedRangeTriggerStream();
         RawArrowSource rightTriggerContinuousProcessor = gamepadEventSourceBuilder.rightTriggerContinuousProcessor();
 
-//        eventProducer.getWorker().getButtonStream()
-//                .subscribe(buttonProcessor::processButtonEvents);
-//
-//        eventProducer.getWorker().getAxisStream()
-//                .subscribe(arrowsStream::processArrowEvents);
-//
-//        eventProducer.getWorker().getAxisStream()
-//                .subscribe(triggerStream::processArrowEvents);
+        eventProducer.getWorker().getButtonStream()
+                .subscribe(buttonProcessor::processButtonEvents);
+
+        eventProducer.getWorker().getAxisStream()
+                .subscribe(arrowsStream::processArrowEvents);
+
+        eventProducer.getWorker().getAxisStream()
+                .subscribe(triggerStream::processArrowEvents);
 //
 //        eventProducer.getWorker().getAxisStream()
 //                        .subscribe(triggerRangeDigi::processArrowEvents);

@@ -12,11 +12,11 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static java.util.function.Predicate.*;
 import static java.util.stream.Collectors.toMap;
 import static org.asmus.tool.SdlStringMapper.translate;
 
@@ -25,9 +25,10 @@ public class JoyWorker {
 
     private final Sinks.Many<List<TimedValue>> buttonStream = Sinks.many().multicast().directBestEffort();
     private final Sinks.Many<Map<String, Integer>> axisStream = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<SourceState> sourceStateStream = Sinks.many().multicast().directBestEffort();
     private ScheduledFuture<?> pollerCloseable;
-
-    private final AtomicBoolean connected = new AtomicBoolean(false);
+    private SourceState.SourceStateBuilder sourceStateBuilder = SourceState.builder()
+            .connected(true);
 
     public JoyWorker() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -41,30 +42,35 @@ public class JoyWorker {
 
     Predicate<ButtonNamePosition> isAxis = ButtonNamePosition::isAxis;
     Predicate<ButtonNamePosition> isHat = ButtonNamePosition::isHat;
+    Predicate<ButtonNamePosition> axisOrHat = isAxis.or(isHat);
 
     @SneakyThrows
-    public Runnable watchingDevice(Controller controller) {
-        LinuxJoystick j = new LinuxJoystick(controller.device(), controller.buttons(), controller.axes());
+    public Function<Controller, Runnable> watchingDevice(String devicePath) {
+        return controller -> {
+            LinuxJoystick j = new LinuxJoystick(controller.device(), controller.buttons(), controller.axes());
 
-        List<ButtonNamePosition> mappings = translate(controller.mapping());
+            sourceStateBuilder = sourceStateBuilder.devicePath(devicePath);
 
-        List<ButtonNamePosition> axisMappings = mappings.stream()
-                .filter(isAxis.or(isHat))
-                .toList();
+            List<ButtonNamePosition> mappings = translate(controller.mapping());
 
-        List<ButtonNamePosition> buttonMappings = mappings.stream()
-                .filter(Predicate.not(ButtonNamePosition::isAxis).and(Predicate.not(ButtonNamePosition::isHat)))
-                .toList();
+            List<ButtonNamePosition> axisMappings = mappings.stream()
+                    .filter(axisOrHat)
+                    .toList();
 
-        ControllerDevice device = new ControllerDevice(axisMappings, buttonMappings, j);
+            List<ButtonNamePosition> buttonMappings = mappings.stream()
+                    .filter(not(axisOrHat))
+                    .toList();
 
-        processEvents(device);
-        connected.set(true);
+            ControllerDevice device = new ControllerDevice(axisMappings, buttonMappings, j);
 
-        return () -> {
-            connected.set(false);
-            j.close();
-            pollerCloseable.cancel(true);
+            processEvents(device);
+            sourceStateStream.tryEmitNext(sourceStateBuilder.connected(true).build());
+
+            return () -> {
+                j.close();
+                pollerCloseable.cancel(true);
+                sourceStateStream.tryEmitNext(sourceStateBuilder.connected(false).build());
+            };
         };
     }
 
@@ -102,13 +108,10 @@ public class JoyWorker {
                         .map(TimedValue::new)
                         .toList();
 
+                sourceStateStream.tryEmitNext(sourceStateBuilder.connected(true).build());
                 buttonStream.tryEmitNext(buttonVals);
             }
         }, 0, TimeUnit.MILLISECONDS);
-    }
-
-    public boolean isConnected() {
-        return connected.get();
     }
 
     public Flux<List<TimedValue>> getButtonStream() {
@@ -117,6 +120,10 @@ public class JoyWorker {
 
     public Flux<Map<String, Integer>> getAxisStream() {
         return axisStream.asFlux();
+    }
+
+    public Flux<SourceState> getSourceStateStream() {
+        return sourceStateStream.asFlux();
     }
 
     record JoyStateMapper(LinuxJoystick joystick) {

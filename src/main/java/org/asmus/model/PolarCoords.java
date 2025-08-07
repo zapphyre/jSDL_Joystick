@@ -1,12 +1,18 @@
 package org.asmus.model;
 
-import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.With;
+import lombok.experimental.NonFinal;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 
 @With
 @Value
-@Builder
+@SuperBuilder
+@NonFinal
+@Jacksonized
+@RequiredArgsConstructor
 public class PolarCoords {
     double radius;
     double theta;

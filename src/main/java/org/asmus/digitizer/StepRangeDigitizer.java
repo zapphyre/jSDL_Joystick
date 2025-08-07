@@ -3,7 +3,6 @@ package org.asmus.digitizer;
 import lombok.RequiredArgsConstructor;
 import org.asmus.model.ELogicalEventType;
 import org.asmus.model.GamepadEvent;
-import org.asmus.model.TriggerPosition;
 import reactor.core.publisher.Sinks;
 
 import java.util.function.Consumer;
@@ -24,13 +23,14 @@ public class StepRangeDigitizer {
 
             int currentSegment = processInput(q.getPosition());
 
-            ELogicalEventType type = ELogicalEventType.STEP_NEGATIVE;
-
-            if (currentSegment > lastSegmentIndex)
-                type = ELogicalEventType.STEP_POSITIVE;
+            ELogicalEventType type = currentSegment > lastSegmentIndex ?
+                    ELogicalEventType.STEP_POSITIVE : ELogicalEventType.STEP_NEGATIVE;
 
             if (lastSegmentIndex != -1 && lastSegmentIndex != currentSegment)
-                qualifiedEventStream.tryEmitNext(q.withLogicalEventType(type));
+                qualifiedEventStream.tryEmitNext(q
+                        .withLogicalEventType(type)
+                        .withPosition(currentSegment)
+                );
 
             lastSegmentIndex = currentSegment;
         };

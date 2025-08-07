@@ -36,7 +36,7 @@ public class EventProducer {
                 .map(EventProducer::getControllerMappings)
                 .filter(Objects::nonNull)
                 .filter(pathExists)
-                .map(worker::watchingDevice)
+                .map(q -> worker.watchingDevice(q.device()).apply(q))
                 .toList();
     }
 
@@ -55,7 +55,7 @@ public class EventProducer {
                                 Optional.of(c.path())
                                         .map(Path::toString)
                                         .map(EventProducer::getControllerMappings)
-                                        .map(worker::watchingDevice)
+                                        .map(worker.watchingDevice(q))
                                         .ifPresent(teardown::set);
                             else
                                 teardown.get().run();
