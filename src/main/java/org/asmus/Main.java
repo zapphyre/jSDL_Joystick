@@ -62,6 +62,7 @@ public class Main {
                 .subscribe(gamepadEventSourceBuilder.rightStickStream()::processArrowEvents);
 
         gamepadEventSourceBuilder.getButtonEventStream()
+                .distinctUntilChanged()
                 .log()
                 .subscribe();
 

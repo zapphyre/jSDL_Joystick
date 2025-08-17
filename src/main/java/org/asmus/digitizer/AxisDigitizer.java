@@ -29,7 +29,9 @@ public class AxisDigitizer {
         double theta = coords.getTheta();
         double r = coords.getRadius();
 
-        if (theta == 0 || r < THRESHOLD) {
+//        System.out.println("Theta: " + theta);
+//        System.out.println("Radius: " + r);
+        if (r < THRESHOLD) {
             return ELogicalEventType.CENTER;
         } else if (theta >= -0.785 && theta < 0.785) {
             return ELogicalEventType.RIGHT;
