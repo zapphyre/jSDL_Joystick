@@ -56,10 +56,10 @@ public class Main {
 //                .subscribe(rightTriggerContinuousProcessor::processArrowEvents);
 
 
-//        eventProducer.getWorker().getAxisStream()
-//                .subscribe(gamepadEventSourceBuilder.leftStickStream()::processArrowEvents);
-//        eventProducer.getWorker().getAxisStream()
-//                .subscribe(gamepadEventSourceBuilder.rightStickStream()::processArrowEvents);
+        eventProducer.getWorker().getAxisStream()
+                .subscribe(gamepadEventSourceBuilder.leftStickStream()::processArrowEvents);
+        eventProducer.getWorker().getAxisStream()
+                .subscribe(gamepadEventSourceBuilder.rightStickStream()::processArrowEvents);
 
         gamepadEventSourceBuilder.getButtonEventStream()
                 .log()

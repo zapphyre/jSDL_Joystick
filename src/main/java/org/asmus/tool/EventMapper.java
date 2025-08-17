@@ -18,9 +18,7 @@ public class EventMapper {
             int xAxisLeft = q.get(x);
 
             double theta = getTheta(xAxisLeft, yAxisLeft);
-            double r = getR(xAxisLeft, yAxisLeft)
-//                    / 46341.0; // Normalize radius
-            ;
+            double r = getR(xAxisLeft, yAxisLeft);
 
             return PolarCoords.builder()
                     .radius(r)
@@ -28,55 +26,6 @@ public class EventMapper {
                     .build();
         };
     }
-
-    int THRESHOLD = 2_000;
-
-    public static Function<PolarCoords, ELogicalEventType> translateAxisMove = coords -> {
-        double theta = coords.getTheta();
-        double r = coords.getRadius();
-
-//        System.out.println("theta: " + theta + ", radius: " + r);
-
-        if (theta == 0) {
-            return ELogicalEventType.CENTER;
-        }
-
-        if (r < THRESHOLD) {
-            return ELogicalEventType.CENTER;
-        }
-
-        if (theta >= -0.785 && theta < 0.785) {
-            return ELogicalEventType.RIGHT;
-        } else if (theta >= 0.785 && theta < 2.356) {
-            return ELogicalEventType.DOWN;
-        } else if (theta >= -2.356 && theta < -0.785) {
-            return ELogicalEventType.UP;
-        }
-
-        return ELogicalEventType.LEFT;
-    };
-
-    public static abstract class Heading {
-//        public abstract Heading nextHeading(Heading prev);
-//        public abstract EPolarDirection getHeading();
-    }
-
-    public static class Noop extends Heading {
-//        @Override
-        public Heading nextHeading(Heading prev) {
-            return this;
-        }
-
-//        @Override
-        public EPolarDirection getHeading() {
-            return EPolarDirection.FIZZY;
-        }
-    }
-    public static class Up extends Heading {}
-    public static class Down extends Heading {}
-    public static class Left extends Heading {}
-    public static class Right extends Heading {}
-    public static class Center extends Heading {}
 
     static double getTheta(double x, double y) {
         return Math.atan2(y, x);

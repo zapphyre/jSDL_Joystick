@@ -136,7 +136,6 @@ public class IntrospectedEventFactory {
 
             Optional.of(Map.of(x.getMapping(), xVal, y.getMapping(), yVal))
                     .map(EventMapper.translateAxis(x.getMapping(), y.getMapping()))
-                    .map(EventMapper.translateAxisMove)
                     .ifPresent(digitizer.digitize(x));
         };
     }
