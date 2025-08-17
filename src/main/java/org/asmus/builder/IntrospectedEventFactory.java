@@ -136,7 +136,7 @@ public class IntrospectedEventFactory {
 
             Optional.of(Map.of(x.getMapping(), xVal, y.getMapping(), yVal))
                     .map(EventMapper.translateAxis(x.getMapping(), y.getMapping()))
-                    .ifPresent(digitizer.digitize(x));
+                    .ifPresent(digitizer.digitize(x, 7));
         };
     }
 
@@ -178,7 +178,7 @@ public class IntrospectedEventFactory {
         Map<EButtonAxisMapping, Integer> mem = new HashMap<>(); // has to be created here, in the instance closure
 
         return q -> continuousTriggerProcessor(axisMapping, mem).apply(q)
-                .forEach(digitizer.digitize());
+                .forEach(digitizer.digitize(7));
     }
 
     RawArrowSource genericContinuousTriggerProcessor(EButtonAxisMapping axisMapping) {

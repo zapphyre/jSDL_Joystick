@@ -5,10 +5,10 @@ import org.asmus.model.EButtonAxisMapping;
 import org.asmus.model.ELogicalEventType;
 import org.asmus.model.GamepadEvent;
 import org.asmus.model.PolarCoords;
+import org.asmus.tool.Util;
 import reactor.core.publisher.Sinks;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 @RequiredArgsConstructor
 public class AxisDigitizer {
@@ -16,10 +16,12 @@ public class AxisDigitizer {
     private static final int THRESHOLD = 2_000;
     private final Sinks.Many<GamepadEvent> qualifiedEventStream;
 
-    public Consumer<PolarCoords> digitize(EButtonAxisMapping x) {
+    public Consumer<PolarCoords> digitize(EButtonAxisMapping x, int segments) {
+        Segmentize segmentizer = Util.pieces(segments, 36_000, 0);
         return q -> qualifiedEventStream.tryEmitNext(GamepadEvent.builder()
                 .type(x)
                 .logicalEventType(translateAxisMove(q))
+                .position(segmentizer.segmentize((int) q.getRadius()))
                 .build());
     }
 
@@ -38,5 +40,7 @@ public class AxisDigitizer {
         }
 
         return ELogicalEventType.LEFT;
-    };
+    }
+
+    ;
 }
