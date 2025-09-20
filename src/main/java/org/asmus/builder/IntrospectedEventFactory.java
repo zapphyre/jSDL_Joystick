@@ -20,10 +20,7 @@ import org.asmus.tool.EventMapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -73,6 +70,12 @@ public class IntrospectedEventFactory {
         GamepadStateMapper gamepadStateMapper = new GamepadStateMapper();
         return states -> states.stream()
                 .map(gamepadStateMapper::map)
+                .filter(Objects::nonNull)
+                .map(q -> {
+//                    q.withModifiers(MODIFIER.getIntrospector().getModifiersResetEvents());
+
+                    return q;
+                })
                 .forEach(qualify);
     }
 

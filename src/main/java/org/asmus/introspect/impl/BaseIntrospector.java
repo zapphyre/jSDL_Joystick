@@ -21,10 +21,4 @@ public abstract class BaseIntrospector implements Introspector {
     Set<String> modifiers = new HashSet<>();
 
     Predicate<ButtonClick> notModifier = q -> !modifiers.remove(q.getPush().getName());
-
-    final Predicate<TimedValue> relevantButtonAction(List<String> forButtonNames) {
-        return q -> forButtonNames.contains(q.getName());
-    }
-
-    BinaryOperator<ButtonClick> lastElement = (p, q) -> q;
 }

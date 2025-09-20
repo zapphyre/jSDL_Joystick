@@ -10,14 +10,17 @@ import java.util.stream.Collectors;
 public class BothIntrospector extends BaseIntrospector {
 
     @Override
-    // all predicates need to be called for state lists to converge to correct state
+    // all predicates need to be called for state Set to converge to correct state
     public ButtonClick translate(ButtonClick buttonClick) {
         boolean press = buttonWasPressed.test(buttonClick);
         boolean release = buttonWasReleased.test(buttonClick);
         boolean notMod = notModifier.test(buttonClick);
 
-        return release ?
-                buttonClick.withModifiers(holding.stream().map(TimedValue::getName).collect(Collectors.toSet())) :
-                buttonClick;
+        return
+//                release ?
+                buttonClick.withModifiers(holding.stream()
+                        .map(TimedValue::getName)
+                        .filter(name -> !name.equals(buttonClick.getRelease().getName())).collect(Collectors.toSet()));
+//                : buttonClick;
     }
 }
