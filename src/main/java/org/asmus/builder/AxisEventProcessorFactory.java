@@ -7,6 +7,7 @@ import org.asmus.tool.EventMapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static org.asmus.builder.AxisEventFactory.shouldPass;
@@ -16,15 +17,19 @@ public class AxisEventProcessorFactory {
     Sinks.Many<PolarCoords> rightPolarStream = Sinks.many().multicast().directBestEffort();
 
     public RawArrowSource leftStickStream() {
+        AtomicBoolean zeroState = new AtomicBoolean();
+
         return events -> Stream.of(events)
-                .filter(shouldPass(NamingConstants.LEFT_STICK_X, NamingConstants.LEFT_STICK_Y))
+                .filter(shouldPass(NamingConstants.LEFT_STICK_X, NamingConstants.LEFT_STICK_Y, zeroState))
                 .map(EventMapper.translateAxis(NamingConstants.LEFT_STICK_X, NamingConstants.LEFT_STICK_Y))
                 .forEach(leftPolarStream::tryEmitNext);
     }
 
     public RawArrowSource reightStickStream() {
+        AtomicBoolean zeroState = new AtomicBoolean();
+
         return events -> Stream.of(events)
-                .filter(shouldPass(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y))
+                .filter(shouldPass(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y, zeroState))
                 .map(EventMapper.translateAxis(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y))
                 .forEach(rightPolarStream::tryEmitNext);
     }

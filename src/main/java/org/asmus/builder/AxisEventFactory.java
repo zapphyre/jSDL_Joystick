@@ -24,19 +24,17 @@ public class AxisEventFactory {
 
     public PolarCoordsProducer leftStickStream() {
         return q -> q.getAxisStream()
-                .filter(shouldPass(NamingConstants.LEFT_STICK_X, NamingConstants.LEFT_STICK_Y))
+                .filter(shouldPass(NamingConstants.LEFT_STICK_X, NamingConstants.LEFT_STICK_Y, new AtomicBoolean()))
                 .map(EventMapper.translateAxis(NamingConstants.LEFT_STICK_X, NamingConstants.LEFT_STICK_Y));
     }
 
     public PolarCoordsProducer rightStickStream() {
         return q -> q.getAxisStream()
-                .filter(shouldPass(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y))
+                .filter(shouldPass(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y, new AtomicBoolean()))
                 .map(EventMapper.translateAxis(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y));
     }
 
-    static Predicate<Map<String, Integer>> shouldPass(String xAxis, String yAxis) {
-        AtomicBoolean zeroState = new AtomicBoolean();
-
+    static Predicate<Map<String, Integer>> shouldPass(String xAxis, String yAxis, AtomicBoolean zeroState) {
         return coords -> {
             int x = coords.getOrDefault(xAxis, 0);
             int y = coords.getOrDefault(yAxis, 0);
