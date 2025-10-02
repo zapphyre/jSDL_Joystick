@@ -17,10 +17,13 @@ import org.asmus.qualifier.impl.ModifierAndLongPressQualifier;
 import org.asmus.qualifier.impl.MultiplicityQualifier;
 import org.asmus.tool.AxisMapper;
 import org.asmus.tool.EventMapper;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,6 +37,9 @@ import static reactor.core.publisher.Flux.fromStream;
 public class IntrospectedEventFactory {
     private final Sinks.Many<GamepadEvent> qualifiedEventStream = Sinks.many().multicast().directBestEffort();
 
+    // parametrize
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
+
     static Predicate<Map.Entry<String, Integer>> notZeroFor(String axisName) {
         return q -> q.getKey().equals(axisName) && q.getValue() != 0;
     }
@@ -45,7 +51,7 @@ public class IntrospectedEventFactory {
 
     private final ActuationBehaviour LONG = ActuationBehaviour.builder()
             .introspector(new BothIntrospector())
-            .qualifier(new AutoLongClickQualifier())
+            .qualifier(new AutoLongClickQualifier(executorService))
             .build();
 
     private final ActuationBehaviour PUSH = ActuationBehaviour.builder()
@@ -55,7 +61,7 @@ public class IntrospectedEventFactory {
 
     private final ActuationBehaviour MULTIPLICITY = ActuationBehaviour.builder()
             .introspector(new BothIntrospector())
-            .qualifier(new MultiplicityQualifier())
+            .qualifier(new MultiplicityQualifier(executorService))
             .build();
 
     List<ActuationBehaviour> behaviours = List.of(MODIFIER, LONG, PUSH, MULTIPLICITY);
@@ -71,11 +77,6 @@ public class IntrospectedEventFactory {
         return states -> states.stream()
                 .map(gamepadStateMapper::map)
                 .filter(Objects::nonNull)
-                .map(q -> {
-//                    q.withModifiers(MODIFIER.getIntrospector().getModifiersResetEvents());
-
-                    return q;
-                })
                 .forEach(qualify);
     }
 
@@ -91,13 +92,15 @@ public class IntrospectedEventFactory {
                     .filter(notZeroFor(EButtonAxisMapping.LEFT.getMapping()))
                     .map(AxisMapper.mapHorizontal);
 
-            Flux.merge(fromStream(vertical), fromStream(horizontal))
+            Disposable subscribe = Flux.merge(fromStream(vertical), fromStream(horizontal))
                     .map(q -> q.withModifiers(
                             MODIFIER.getIntrospector().getModifiersResetEvents().stream()
                                     .map(EButtonAxisMapping::getByMappingName)
                                     .collect(Collectors.toSet())
                     ))
                     .subscribe(qualifiedEventStream::tryEmitNext);
+
+            subscribe.dispose();
         };
     }
 

@@ -5,6 +5,7 @@ import org.asmus.model.*;
 
 import java.util.*;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -12,8 +13,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MultiplicityQualifier extends BaseQualifier {
 
-    Map<ButtonEvent, TimeFuture> timingFutureMap = new HashMap<>();
-    Set<EButtonAxisMapping> modifiers = new HashSet<>();
+    private final ScheduledExecutorService executorService;
+    private final Map<ButtonEvent, TimeFuture> timingFutureMap = new HashMap<>();
+    private final Set<EButtonAxisMapping> modifiers = new HashSet<>();
 
     void propagateEvent(ButtonEvent evt) {
         Optional.ofNullable(evt)
@@ -62,8 +64,7 @@ public class MultiplicityQualifier extends BaseQualifier {
             boolean longClick = delta > 410;
 //            System.out.println("delta: " + delta);
 
-            ScheduledFuture<?> future = Executors.newSingleThreadScheduledExecutor()
-                    .schedule(() -> propagateEvent(event), longStep, TimeUnit.MILLISECONDS);
+            ScheduledFuture<?> future = executorService.schedule(() -> propagateEvent(event), longStep, TimeUnit.MILLISECONDS);
             TimeFuture tf = new TimeFuture(now, timeFuture.multiplicity, longClick, event, future);
             timingFutureMap.put(event, tf);
         }
