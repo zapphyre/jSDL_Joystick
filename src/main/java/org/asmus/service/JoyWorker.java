@@ -61,7 +61,7 @@ public class JoyWorker {
                     .filter(not(axisOrHat))
                     .toList();
 
-            ControllerDevice device = new ControllerDevice(axisMappings, buttonMappings, j);
+            ControllerDevice device = new ControllerDevice(axisMappings, buttonMappings, new GamepadDevice(controller.name(), controller.device()), j);
 
             processEvents(device);
             sourceStateStream.tryEmitNext(sourceStateBuilder.connected(true).build());
@@ -72,12 +72,6 @@ public class JoyWorker {
                 sourceStateStream.tryEmitNext(sourceStateBuilder.connected(false).build());
             };
         };
-    }
-
-    Function<List<ButtonNamePosition>, List<ButtonNamePosition>> mapToPosition(Predicate<ButtonNamePosition> predicate) {
-        return q -> q.stream()
-                .filter(predicate)
-                .toList();
     }
 
     @SneakyThrows
@@ -98,13 +92,13 @@ public class JoyWorker {
                 if (!j.isChanged()) return;
 
                 Map<String, Integer> axisVals = dev.axisMappings().stream()
-                        .map(jMapper.toIV(LinuxJoystick::getAxisState))
+                        .map(jMapper.toIV(LinuxJoystick::getAxisState, dev.device()))
                         .collect(toMap(InputValue::name, InputValue::value));
 
                 axisStream.tryEmitNext(axisVals);
 
                 List<TimedValue> buttonVals = dev.buttonMappings().stream()
-                        .map(jMapper.toIV(LinuxJoystick::getButtonState))
+                        .map(jMapper.toIV(LinuxJoystick::getButtonState, dev.device()))
                         .map(TimedValue::new)
                         .toList();
 
@@ -127,8 +121,8 @@ public class JoyWorker {
     }
 
     record JoyStateMapper(LinuxJoystick joystick) {
-        <T> Function<ButtonNamePosition, InputValue<T>> toIV(BiFunction<LinuxJoystick, Integer, T> getter) {
-            return q -> new InputValue<>(getter.apply(joystick, q.getPosition()), q.getButtonName());
+        <T> Function<ButtonNamePosition, InputValue<T>> toIV(BiFunction<LinuxJoystick, Integer, T> getter, GamepadDevice device) {
+            return q -> new InputValue<>(getter.apply(joystick, q.getPosition()), q.getButtonName(), device);
         }
     }
 }

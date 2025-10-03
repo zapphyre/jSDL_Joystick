@@ -14,7 +14,9 @@ public class GamepadStateMapper {
     private final Predicate<ButtonClick> buttonStateChanged = q -> q.getPush().isValue() != q.getRelease().isValue();
 
     ButtonClick translate(TimedValue current) {
-        TimedValue previous = values.computeIfAbsent(current.getName(), TimedValue::new);
+        TimedValue previous = values.computeIfAbsent(current.getName(), q -> TimedValue.builder()
+                .device(current.getDevice())
+                .name(q).build());
 
         if (!current.equals(previous))
             values.put(current.getName(), current);
@@ -22,6 +24,7 @@ public class GamepadStateMapper {
         return ButtonClick.builder()
                 .push(previous)
                 .release(current)
+                .device(current.getDevice())
                 .build();
     }
 

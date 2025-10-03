@@ -37,7 +37,6 @@ import static reactor.core.publisher.Flux.fromStream;
 public class IntrospectedEventFactory {
     private final Sinks.Many<GamepadEvent> qualifiedEventStream = Sinks.many().multicast().directBestEffort();
 
-    // parametrize
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
 
     static Predicate<Map.Entry<String, Integer>> notZeroFor(String axisName) {

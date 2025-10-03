@@ -17,4 +17,6 @@ public class ButtonClick {
 
     TimedValue push;
     TimedValue release;
+
+    GamepadDevice device;
 }

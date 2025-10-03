@@ -14,4 +14,5 @@ public class ButtonEvent {
     String name;
     boolean release;
     Set<String> modifiers;
+    GamepadDevice device;
 }

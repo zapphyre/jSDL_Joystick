@@ -1,4 +1,4 @@
 package org.asmus.model;
 
-public record InputValue<T>(T value, String name) {
+public record InputValue<T>(T value, String name, GamepadDevice device) {
 }

@@ -17,15 +17,12 @@ public class TimedValue {
 
     String name;
     boolean value;
-
-    public TimedValue(String name) {
-        this.name = name;
-        this.value = false;
-    }
+    GamepadDevice device;
 
     public TimedValue(InputValue<Boolean> iv) {
         this.name = iv.name();
         this.value = iv.value();
+        this.device = iv.device();
     }
 
 }

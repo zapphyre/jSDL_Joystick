@@ -30,6 +30,7 @@ public abstract class BaseQualifier implements QualifyBuilder, Qualifier {
                 .longPress(computeIsLongPress(q))
                 .modifiers(convertModifiers(q))
                 .eventName(q.getRelease().getName())
+                .device(q.getDevice())
                 .build();
     }
 

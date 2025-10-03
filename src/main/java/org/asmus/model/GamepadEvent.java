@@ -25,4 +25,6 @@ public class GamepadEvent {
     EQualificationType qualified = EQualificationType.PUSH;
 
     int position;
+
+    GamepadDevice device;
 }
