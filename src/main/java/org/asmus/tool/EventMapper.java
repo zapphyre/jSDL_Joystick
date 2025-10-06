@@ -1,6 +1,7 @@
 package org.asmus.tool;
 
 import lombok.experimental.UtilityClass;
+import org.asmus.model.AxisReading;
 import org.asmus.model.ELogicalEventType;
 import org.asmus.model.EPolarDirection;
 import org.asmus.model.PolarCoords;
@@ -11,11 +12,13 @@ import java.util.function.Function;
 @UtilityClass
 public class EventMapper {
 
-    public static Function<Map<String, Integer>, PolarCoords> translateAxis(String x,
-                                                                            String y) {
+    public static Function<AxisReading, PolarCoords> translateAxis(String x,
+                                                                   String y) {
         return q -> {
-            int yAxisLeft = q.get(y);
-            int xAxisLeft = q.get(x);
+            Map<String, Integer> coords = q.values();
+
+            int yAxisLeft = coords.get(y);
+            int xAxisLeft = coords.get(x);
 
             double theta = getTheta(xAxisLeft, yAxisLeft);
             double r = getR(xAxisLeft, yAxisLeft);

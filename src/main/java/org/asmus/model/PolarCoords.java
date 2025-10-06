@@ -17,6 +17,8 @@ public class PolarCoords {
     double radius;
     double theta;
 
+    GamepadDevice device;
+
     public boolean isZero() {
         return radius == 0 && theta == 0;
     }

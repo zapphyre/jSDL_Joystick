@@ -1,9 +1,9 @@
 package org.asmus.builder.closure.button;
 
-import java.util.Map;
+import org.asmus.model.AxisReading;
 
 @FunctionalInterface
 public interface RawArrowSource {
 
-    void processArrowEvents(Map<String, Integer> axisStates);
+    void processArrowEvents(AxisReading axisStates);
 }

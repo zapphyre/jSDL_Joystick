@@ -24,7 +24,7 @@ import static org.asmus.tool.SdlStringMapper.translate;
 public class JoyWorker {
 
     private final Sinks.Many<List<TimedValue>> buttonStream = Sinks.many().multicast().directBestEffort();
-    private final Sinks.Many<Map<String, Integer>> axisStream = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<AxisReading> axisStream = Sinks.many().multicast().directBestEffort();
     private final Sinks.Many<SourceState> sourceStateStream = Sinks.many().multicast().directBestEffort();
     private ScheduledFuture<?> pollerCloseable;
     private SourceState.SourceStateBuilder sourceStateBuilder = SourceState.builder()
@@ -95,7 +95,7 @@ public class JoyWorker {
                         .map(jMapper.toIV(LinuxJoystick::getAxisState, dev.device()))
                         .collect(toMap(InputValue::name, InputValue::value));
 
-                axisStream.tryEmitNext(axisVals);
+                axisStream.tryEmitNext(new AxisReading(axisVals, dev.device()));
 
                 List<TimedValue> buttonVals = dev.buttonMappings().stream()
                         .map(jMapper.toIV(LinuxJoystick::getButtonState, dev.device()))
@@ -112,7 +112,7 @@ public class JoyWorker {
         return buttonStream.asFlux();
     }
 
-    public Flux<Map<String, Integer>> getAxisStream() {
+    public Flux<AxisReading> getAxisStream() {
         return axisStream.asFlux();
     }
 

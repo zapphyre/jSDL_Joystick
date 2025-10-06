@@ -81,12 +81,12 @@ public class IntrospectedEventFactory {
 
     public RawArrowSource getArrowsStream() {
         return axisStates -> {
-            Stream<GamepadEvent> vertical = axisStates.entrySet().stream()
+            Stream<GamepadEvent> vertical = axisStates.values().entrySet().stream()
                     .filter(onlyDpValues)
                     .filter(notZeroFor(EButtonAxisMapping.UP.getMapping()))
                     .map(AxisMapper.mapVertical);
 
-            Stream<GamepadEvent> horizontal = axisStates.entrySet().stream()
+            Stream<GamepadEvent> horizontal = axisStates.values().entrySet().stream()
                     .filter(onlyDpValues)
                     .filter(notZeroFor(EButtonAxisMapping.LEFT.getMapping()))
                     .map(AxisMapper.mapHorizontal);
@@ -97,6 +97,7 @@ public class IntrospectedEventFactory {
                                     .map(EButtonAxisMapping::getByMappingName)
                                     .collect(Collectors.toSet())
                     ))
+                    .map(q -> q.withDevice(axisStates.device()))
                     .subscribe(qualifiedEventStream::tryEmitNext);
 
             subscribe.dispose();
@@ -132,14 +133,15 @@ public class IntrospectedEventFactory {
     RawArrowSource genericDigitizedStickAxisProcessor(EButtonAxisMapping x, EButtonAxisMapping y) {
         AxisDigitizer digitizer = new AxisDigitizer(qualifiedEventStream);
         Map<EButtonAxisMapping, Integer> mem = new HashMap<>();
-        return q -> {
+        return r -> {
+            Map<String, Integer> q = r.values();
             Integer xVal = q.get(x.getMapping());
             Integer yVal = q.get(y.getMapping());
 
             if (still(x, mem).test(xVal) && still(y, mem).test(yVal))
                 return;
 
-            Optional.of(Map.of(x.getMapping(), xVal, y.getMapping(), yVal))
+            Optional.of(new AxisReading(Map.of(x.getMapping(), xVal, y.getMapping(), yVal), r.device()))
                     .map(EventMapper.translateAxis(x.getMapping(), y.getMapping()))
                     .ifPresent(digitizer.digitize(x, 7));
         };
@@ -163,9 +165,9 @@ public class IntrospectedEventFactory {
         return genericDigitizedTriggerStepProcessor(EButtonAxisMapping.TRIGGER_RIGHT);
     }
 
-    Function<Map<String, Integer>, Stream<GamepadEvent>> continuousTriggerProcessor(EButtonAxisMapping axis,
+    Function<AxisReading, Stream<GamepadEvent>> continuousTriggerProcessor(EButtonAxisMapping axis,
                                                                                     Map<EButtonAxisMapping, Integer> mem) {
-        return q -> q.entrySet().stream()
+        return q -> q.values().entrySet().stream()
                 .filter(actionFor(axis, mem))
                 .map(p -> GamepadEvent.builder()
                         .qualified(EQualificationType.MULTIPLE) // maybe too early set / too high of a qualif.
@@ -175,7 +177,9 @@ public class IntrospectedEventFactory {
                 .map(p -> p.withModifiers(MODIFIER.getIntrospector().getModifiersResetEvents().stream()
                         .map(EButtonAxisMapping::getByMappingName)
                         .collect(Collectors.toSet()))
-                );
+                )
+                .map(e -> e.withDevice(q.device()))
+                ;
     }
 
     RawArrowSource genericDigitizedTriggerStepProcessor(EButtonAxisMapping axisMapping) {

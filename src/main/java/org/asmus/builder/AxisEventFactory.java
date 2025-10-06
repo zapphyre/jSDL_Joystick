@@ -2,6 +2,7 @@ package org.asmus.builder;
 
 import lombok.experimental.UtilityClass;
 import org.asmus.builder.closure.axis.PolarCoordsProducer;
+import org.asmus.model.AxisReading;
 import org.asmus.model.EButtonAxisMapping;
 import org.asmus.model.NamingConstants;
 import org.asmus.model.TriggerPosition;
@@ -34,8 +35,9 @@ public class AxisEventFactory {
                 .map(EventMapper.translateAxis(NamingConstants.RIGHT_STICK_X, NamingConstants.RIGHT_STICK_Y));
     }
 
-    static Predicate<Map<String, Integer>> shouldPass(String xAxis, String yAxis, AtomicBoolean zeroState) {
-        return coords -> {
+    static Predicate<AxisReading> shouldPass(String xAxis, String yAxis, AtomicBoolean zeroState) {
+        return r -> {
+            Map<String, Integer> coords = r.values();
             int x = coords.getOrDefault(xAxis, 0);
             int y = coords.getOrDefault(yAxis, 0);
 
