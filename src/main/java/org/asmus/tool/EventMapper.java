@@ -25,6 +25,7 @@ public class EventMapper {
 
             return PolarCoords.builder()
                     .radius(r)
+                    .device(q.device())
                     .theta(theta)
                     .build();
         };
