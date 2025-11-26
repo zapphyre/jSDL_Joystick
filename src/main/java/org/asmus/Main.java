@@ -72,6 +72,5 @@ public class Main {
                 .distinctUntilChanged()
                 .log()
                 .subscribe();
-
     }
 }

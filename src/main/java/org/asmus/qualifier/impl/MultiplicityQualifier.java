@@ -62,7 +62,6 @@ public class MultiplicityQualifier extends BaseQualifier {
             long now = System.currentTimeMillis();
             long delta = now - timeFuture.time;
             boolean longClick = delta > 410;
-//            System.out.println("delta: " + delta);
 
             ScheduledFuture<?> future = executorService.schedule(() -> propagateEvent(event), longStep, TimeUnit.MILLISECONDS);
             TimeFuture tf = new TimeFuture(now, timeFuture.multiplicity, longClick, event, future);
